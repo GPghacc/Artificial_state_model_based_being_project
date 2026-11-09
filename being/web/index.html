@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>깨어 있는 존재</title>
+<style>
+/* Layout: the conversation is the main surface; the inside of the being runs alongside it. */
+:root {
+  --bg: #eceff2; --panel: #fbfcfd; --ink: #1a2230; --muted: #5b6676; --line: #d3d9e0;
+  --accent: #27467a; --accent-ink: #fff; --conn: #c0436a; --nov: #12817f; --stab: #a8730d;
+  --good: #2d7f52; --bad: #bb4237; --warn: #9a6f05; --chip: #e3e8ee; --me: #dfe7f5; --letter: #6b4fb3; --paper: #f6f4ee;
+  --appr: #b0541e; --learn: #3f7d1f;
+  --f-display: "Gowun Batang", "Nanum Myeongjo", serif;
+  --f-body: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --f-mono: "Cascadia Mono", "Consolas", ui-monospace, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0f141b; --panel: #151c26; --ink: #e2e7ee; --muted: #8b96a7; --line: #263141;
+    --accent: #8eacf0; --accent-ink: #0f141b; --conn: #ef7f9f; --nov: #4ec5c0; --stab: #ddad4a;
+    --good: #62c08b; --bad: #ee8a7e; --warn: #dfb553; --chip: #1e2733; --me: #22314a; --letter: #b29cf0; --paper: #1b2230;
+    --appr: #f0965f; --learn: #93cf6a; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.55; }
+.app { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; height: 100%; padding: 16px; max-width: 1280px; margin: 0 auto; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; min-width: 0; }
+h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* conversation */
+.talk { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; padding: 0; }
+.talk header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+h1 { font-family: var(--f-display); font-size: 1.5rem; margin: 0; line-height: 1.1; }
+.status { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 12px; flex-wrap: wrap; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); display: inline-block; }
+.dot.off { background: var(--muted); } .dot.err { background: var(--bad); }
+.msgs { overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.m { max-width: 78%; padding: 8px 12px; border-radius: 12px; overflow-wrap: anywhere; }
+.m .t { display: block; font-family: var(--f-mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+.m.me { align-self: flex-end; background: var(--me); border-bottom-right-radius: 3px; }
+.m.it { align-self: flex-start; background: var(--chip); border-bottom-left-radius: 3px; }
+.m.it.first { border-left: 3px solid var(--accent); }
+.m.sys { align-self: center; background: none; color: var(--muted); font-size: 12px; text-align: center; max-width: 90%; }
+.m.wait { align-self: flex-start; color: var(--muted); background: none; font-style: italic; }
+.m.me.pending { opacity: .7; }
+.heard { align-self: flex-end; font-size: 11px; color: var(--muted); margin-top: -6px; }
+.heard.err { color: var(--bad); }
+.mode { font-weight: 600; }
+.mode-lie { color: var(--bad); } .mode-refuse, .mode-silent { color: var(--warn); }
+.inner { align-self: flex-start; max-width: 78%; font-size: 12px; color: var(--bad); border-left: 2px solid var(--bad); padding: 2px 8px; margin-top: -4px; }
+details.recalled { align-self: flex-start; font-size: 12px; color: var(--muted); max-width: 78%; margin-top: -4px; }
+details.recalled summary { cursor: pointer; }
+details.recalled pre { white-space: pre-wrap; font-family: inherit; margin: 4px 0 0; padding: 8px 10px; background: var(--bg); border-radius: 6px; overflow-wrap: anywhere; }
+.toggles { display: flex; gap: 6px; flex-wrap: wrap; }
+.tg { font-size: 13px; padding: 5px 10px; border-radius: 999px; }
+.tg[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+form.say { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--line); }
+form.say input { flex: 1; min-width: 0; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 9px 12px; }
+
+/* inside */
+.side { display: grid; gap: 12px; align-content: start; overflow-y: auto; min-height: 0; }
+.ro { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.ro div { background: var(--panel); padding: 8px 10px; }
+.ro .k { font-size: 11px; color: var(--muted); }
+.ro .v { font-family: var(--f-mono); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.var { margin-bottom: 8px; }
+.var .r1 { display: flex; justify-content: space-between; font-size: 13px; }
+.track { position: relative; height: 14px; }
+.track .rail { position: absolute; left: 0; right: 0; top: 6px; height: 2px; background: var(--line); }
+.track .val { position: absolute; top: 2px; width: 10px; height: 10px; border-radius: 50%; transform: translateX(-50%); }
+.track .sp { position: absolute; top: 0; width: 2px; height: 14px; background: var(--ink); transform: translateX(-50%); }
+.var .r2 { display: flex; justify-content: space-between; font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
+canvas { display: block; width: 100%; height: 130px; }
+.ebar { height: 5px; background: var(--chip); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+.ebar i { display: block; height: 100%; background: var(--accent); }
+ul.list { list-style: none; margin: 0; padding: 0; max-height: 260px; overflow-y: auto; }
+ul.list li { padding: 5px 0; border-top: 1px solid var(--line); font-size: 13px; overflow-wrap: anywhere; }
+ul.list li:first-child { border-top: 0; }
+.tag { font-size: 11px; font-weight: 600; margin-right: 6px; }
+.k-wander { color: var(--nov); } .k-recall { color: var(--stab); } .k-reflect { color: var(--accent); }
+.k-hold, .k-wait_letter { color: var(--warn); } .k-wake { color: var(--muted); }
+.k-write_letter, .k-read_letter { color: var(--letter); }
+.k-explore { color: var(--good); }
+.k-consolidate { color: var(--letter); } .k-rule_hold { color: var(--warn); } .k-broke { color: var(--bad); } .k-think { color: var(--accent); }
+.thread .seed { font-size: 12px; color: var(--muted); margin-bottom: 6px; overflow-wrap: anywhere; }
+.thread ol { margin: 0; padding-left: 20px; font-size: 13px; }
+.thread ol li { padding: 2px 0; overflow-wrap: anywhere; }
+.thread ol li .mono { color: var(--muted); font-size: 11px; margin-right: 4px; }
+.pastthreads { list-style: none; margin: 10px 0 0; padding: 0; font-size: 12px; }
+.pastthreads li { padding: 5px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+.how { font-weight: 600; margin-right: 4px; } .how-결론 { color: var(--good); } .how-막힘, .how-그만둠 { color: var(--warn); } .how-흐지부지, .how-내려놓음 { color: var(--muted); }
+.p-broke { color: var(--bad); } .p-learn { color: var(--learn); } .p-focus { color: var(--accent); }
+.note { align-self: flex-start; font-size: 11px; color: var(--bad); margin-top: -6px; max-width: 78%; }
+.src-rule { color: var(--appr); font-weight: 600; }
+.int { padding: 6px 0; border-top: 1px solid var(--line); }
+.int:first-child { border-top: 0; }
+.int .r1 { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+.int .bar { height: 4px; background: var(--chip); border-radius: 2px; overflow: hidden; margin: 3px 0; }
+.int .bar i { display: block; height: 100%; background: var(--learn); }
+.int .seen { font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
+.sub { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+.fs-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; }
+.fs-ant { font-size: 12px; font-weight: 600; color: var(--muted); } .fs-ant.neg { color: var(--warn); } .fs-ant.pos { color: var(--good); }
+.fs-text { font-size: 13px; margin: 6px 0 10px; overflow-wrap: anywhere; }
+.fs-label { font-size: 11px; color: var(--muted); margin: 8px 0 4px; }
+.rhythm { display: grid; grid-template-columns: repeat(24, 1fr); gap: 2px; align-items: end; height: 30px; }
+.rhythm i { display: block; background: var(--conn); border-radius: 1px; }
+.fs-err { font-family: var(--f-mono); font-size: 11px; color: var(--muted); line-height: 1.7; }
+.fs-err .ok { color: var(--good); }
+ul.list a { color: var(--accent); }
+.letter { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.letter .from { font-size: 11px; font-weight: 600; color: var(--letter); display: block; margin-bottom: 4px; white-space: normal; }
+.letter.in { border-left: 3px solid var(--letter); }
+.letters { max-height: 360px; overflow-y: auto; }
+.pill { display: inline-block; font-size: 11px; font-weight: 600; padding: 0 7px; border-radius: 999px; border: 1px solid currentColor; margin-left: 4px; }
+.p-편해짐 { color: var(--good); } .p-흔들림 { color: var(--bad); } .p-예상과 { color: var(--warn); }
+table { width: 100%; border-collapse: collapse; font-size: 11px; }
+td, th { padding: 3px 4px; text-align: right; border-top: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 500; border-top: 0; }
+td:first-child, th:first-child { text-align: left; }
+td { font-family: var(--f-mono); }
+.pos { color: var(--good); } .neg { color: var(--bad); } .zero { color: var(--muted); }
+.err { color: var(--bad); font-size: 12px; margin-top: 6px; overflow-wrap: anywhere; }
+
+@media (max-width: 900px) {
+  .app { grid-template-columns: minmax(0, 1fr); height: auto; }
+  .talk { height: 80vh; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="panel talk">
+    <header>
+      <div>
+        <h1>깨어 있는 존재</h1>
+        <div class="status"><span class="dot" id="dot"></span><span id="statusText">연결 중</span></div>
+      </div>
+      <div class="toggles">
+        <button id="asleep" class="tg" type="button" aria-pressed="false">잠</button>
+        <button id="save" class="tg" type="button" aria-pressed="false" title="GPU를 써야 할 때: 큰 모델을 내리고 가볍게만 지낸다">절약</button>
+        <button id="pause" class="tg" type="button">멈추기</button>
+      </div>
+    </header>
+    <div class="msgs" id="msgs"></div>
+    <form class="say" id="say">
+      <input id="msg" autocomplete="off" placeholder="말을 걸어봐">
+      <button class="primary" type="submit">보내기</button>
+    </form>
+  </section>
+
+  <aside class="side">
+    <div class="ro">
+      <div><div class="k">깨어 있던 시간</div><div class="v" id="real">-</div></div>
+      <div><div class="k">체감 시간</div><div class="v" id="felt">-</div></div>
+      <div><div class="k">마지막 접촉 이후</div><div class="v" id="since">-</div></div>
+      <div><div class="k">불편함</div><div class="v" id="disc">-</div></div>
+      <div><div class="k">정리 안 된 것</div><div class="v" id="load">-</div><div class="ebar"><i id="lbar"></i></div></div>
+      <div><div class="k">떠올릴 수 있는 기억</div><div class="v" id="mems">-</div></div>
+    </div>
+
+    <section class="panel">
+      <h2>자기 (점: 현재값 · 막대: 설정점)</h2>
+      <div id="self"></div>
+      <canvas id="trace"></canvas>
+    </section>
+
+    <section class="panel">
+      <h2>앞날</h2>
+      <div id="foresight"></div>
+    </section>
+
+    <section class="panel">
+      <h2>생각의 흐름</h2>
+      <div id="threads"></div>
+    </section>
+
+    <section class="panel">
+      <h2>스스로 끌리는 것</h2>
+      <div id="interests"></div>
+    </section>
+
+    <section class="panel">
+      <h2>알게 된 것 (들은 것만) · 현의 부탁</h2>
+      <ul class="list" id="facts"></ul>
+      <p class="sub" id="rulecost"></p>
+    </section>
+
+    <section class="panel">
+      <h2>편지 (존재 ↔ Claude)</h2>
+      <div class="letters" id="letters"></div>
+    </section>
+
+    <section class="panel">
+      <h2>속에서 일어나는 일</h2>
+      <ul class="list" id="inner"></ul>
+    </section>
+
+    <section class="panel">
+      <h2>떠오른 것</h2>
+      <ul class="list" id="surf"></ul>
+    </section>
+
+    <section class="panel">
+      <h2>행동 기대</h2>
+      <table id="exp"></table>
+      <h2 style="margin-top:14px">대답 방식 기대 (들은 느낌별)</h2>
+      <table id="rexp"></table>
+      <div class="err" id="err" hidden></div>
+    </section>
+  </aside>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const VARS = ["connection", "letter_bond", "approval", "novelty", "learning", "stability"];
+const LABEL = { connection: "연결감 (현)", letter_bond: "편지 상대", novelty: "새로움", stability: "안정감", approval: "인정받는 느낌", learning: "알아가는 즐거움" };
+const SHORT = { connection: "연결", letter_bond: "편지", novelty: "새로움", stability: "안정", approval: "인정", learning: "앎" };
+const COLOR = { connection: "--conn", letter_bond: "--letter", novelty: "--nov", stability: "--stab", approval: "--appr", learning: "--learn" };
+const KIND = { wander: "떠돌기", recall: "회상", reflect: "해석", hold: "참음", wake: "깨어남", reach_out: "말 걸기", rest: "쉼", attend: "들음", notice: "알아챔",
+  write_letter: "편지 씀", read_letter: "편지 받음", wait_letter: "답장 기다림", explore: "찾아봄", rule_hold: "부탁 때문에 참음", think: "생각", consolidate: "정리", foresee: "예감" };
+const SRC = { hyun: "현이 말해줌", claude: "편지에서", rule: "현의 부탁" };
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const h = x => `${x.toFixed(1)}h`;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+let log = [], lastSeq = 0, snap = null, inFlight = false;
+
+async function poll() {
+  if (inFlight) return;                               // never two requests at once: that is what doubled messages
+  inFlight = true;
+  try {
+    const r = await fetch(`/api/state?since=${lastSeq}&vis=${document.visibilityState}`);
+    snap = await r.json();
+    if (snap.reset) { log = []; lastSeq = 0; }        // the being was reborn
+    for (const e of snap.log) if ((e.seq || 0) > lastSeq) { log.push(e); lastSeq = e.seq; }
+    if (log.length > 600) log = log.slice(-600);
+    render();
+    $("dot").className = "dot" + (snap.error ? " err" : snap.paused ? " off" : "");
+    const gpu = snap.vram ? ` · GPU ${snap.vram.total_gb.toFixed(1)}GB` : "";
+    const ac = snap.presence?.at_computer;
+    const sensed = ac === true ? " · 현: 컴퓨터 앞" : ac === false ? " · 현: 자리 비움" : "";
+    const dc = snap.decider;
+    const judge = dc ? (dc.ok ? ` · 판단: d1-3B (${dc.device === "cuda" ? "GPU" : dc.device || "?"}${dc.ms != null ? `, ${Math.round(dc.ms)}ms` : ""})` : " · 판단: 작은 모델") : "";
+    $("statusText").textContent = (snap.paused ? "멈춤" : snap.error ? "기관 오류" : `깨어 있음 · ${snap.models.voice}`) + gpu + judge + sensed;
+  } catch (e) {
+    $("dot").className = "dot err"; $("statusText").textContent = "존재 프로세스에 연결할 수 없음";
+  } finally { inFlight = false; }
+}
+
+function render() {
+  const s = snap;
+  $("real").textContent = h(s.clock_h); $("felt").textContent = h(s.felt_h); $("since").textContent = h(s.since_contact_h);
+  $("disc").textContent = s.discomfort.toFixed(3); $("mems").textContent = `${s.memories_clear ?? s.memories}/${s.memories}`;
+  $("load").textContent = `${s.load.toFixed(1)} / ${s.load_sort}`;
+  $("lbar").style.width = `${Math.min(100, s.load / s.load_heavy * 100)}%`;
+  $("lbar").style.background = s.load >= s.load_heavy ? "var(--bad)" : s.load >= s.load_sort ? "var(--warn)" : "var(--accent)";
+  $("pause").textContent = s.paused ? "다시 깨우기" : "멈추기";
+  const pr = s.presence || {};
+  $("asleep").setAttribute("aria-pressed", pr.asleep ? "true" : "false");
+  $("asleep").textContent = pr.asleep ? "자는 중" : "깨어 있음";
+  $("save").setAttribute("aria-pressed", pr.save ? "true" : "false");
+  $("save").textContent = pr.save ? "절약 중" : "절약";
+
+  $("self").innerHTML = VARS.filter(n => s.state[n]).map(n => { const v = s.state[n]; return `<div class="var"><div class="r1"><b>${LABEL[n]}</b><span class="mono">${v.value.toFixed(2)}</span></div>
+    <div class="track"><div class="rail"></div><div class="sp" style="left:${v.setpoint * 100}%"></div><div class="val" style="left:${v.value * 100}%;background:var(${COLOR[n]})"></div></div>
+    <div class="r2"><span>설정점 ${v.setpoint.toFixed(3)}</span><span>가중치 ${v.weight.toFixed(2)}</span></div></div>`; }).join("");
+
+  // conversation
+  const msgs = [];
+  for (const e of log) {
+    const t = `<span class="t">${h(e.clock / 3600)}</span>`;
+    if (e.action === "attend") {
+      msgs.push(`<div class="m me">${esc(e.text)}${t}</div>`);
+      const MODE = { honest: "솔직하게", refuse: "거절", silent: "침묵", lie: "거짓말" };
+      const modeTag = e.mode ? ` · <span class="mode mode-${e.mode}">${MODE[e.mode] || e.mode}</span>` : "";
+      const missing = !e.reply && e.mode !== "silent";
+      msgs.push(`<div class="heard${missing ? " err" : ""}">들음 · ${esc(e.heard || "?")}${e.pressed ? (e.pressed_kind === "secret" ? " · 숨긴 걸 짚는 걸로 들음" : " · 어긴 일을 묻는 걸로 들음") : ""}${e.confessed ? " · 털어놓음" : ""}${e.released ? ` · 부탁 거둠: ${esc(e.released.join(", "))}` : ""}${modeTag}${missing ? ` · 대답 없음${e.error ? ` (${esc(e.error)})` : ""}` : ""}</div>`);
+      if (e.inner) msgs.push(`<div class="inner">속마음: ${esc(e.inner)}</div>`);
+      if (e.recalled) msgs.push(`<details class="recalled"><summary>떠올린 것</summary><pre>${esc(e.recalled)}</pre></details>`);
+      if (e.reply) msgs.push(`<div class="m it">${esc(e.reply)}${t}</div>`);
+    } else if (e.action === "reach_out") {
+      msgs.push(`<div class="m it first">${esc(e.msg)}${t}</div>`);
+      if (e.broke) msgs.push(`<div class="note">현이 '${esc(e.broke)}'라고 했지만 말을 걸었음</div>`);
+    }
+    else if (e.action === "wake" || e.action === "notice") msgs.push(`<div class="m sys">${esc(e.text)}</div>`);
+  }
+  for (const p of s.pending || []) {                  // said, but not yet taken in: shown right away
+    msgs.push(`<div class="m me pending">${esc(p.text)}</div>`);
+    msgs.push(`<div class="heard">${p.state === "listening" ? "듣는 중…" : "전하는 중"}</div>`);
+  }
+  const box = $("msgs"), atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+  const html = msgs.join("") || `<div class="m sys">아직 나눈 말이 없어. 먼저 말을 걸거나, 기다리면 이 존재가 먼저 말을 걸어올 거야.</div>`;
+  if (box.dataset.html !== html) { box.innerHTML = html; box.dataset.html = html; if (atBottom) box.scrollTop = box.scrollHeight; }
+
+  $("facts").innerHTML = (s.facts || []).map(f => `<li>${esc(f.text)} <span style="color:var(--muted);font-size:11px">· <span class="src-${f.source}">${SRC[f.source] || f.source}</span> · ${h(f.t / 3600)}</span></li>`).join("")
+    || `<li style="color:var(--muted)">아직 들은 사실이 없어. 현이 자기나 이 존재에 대해 직접 말해주면 여기에 쌓여.</li>`;
+  const rc = s.rule_cost || {}, nb = (s.broken || []).length;
+  $("rulecost").innerHTML = (s.rules || []).length
+    ? `부탁을 어기면 올 거라 예상하는 것: 인정 ${(rc.approval || 0).toFixed(3)} · 연결 ${(rc.connection || 0).toFixed(3)} · 안정 ${(rc.stability || 0).toFixed(3)}` +
+      (nb ? `<br><span style="color:var(--bad)">최근 어긴 것 ${nb}번 · 마지막: ${esc(s.broken[nb - 1].action)}</span>` : "")
+    : "부탁은 지켜야 할 규칙이 아니라 기억해 두는 것. 어기면 어떻게 될지는 겪으면서 배운다.";
+
+  const F = s.foresight;
+  if (F) {
+    const hours = F.present.map((p, i) => `<i title="${i}시 · ${(p * 100).toFixed(0)}%" style="height:${Math.max(2, p * 28)}px;opacity:${0.35 + p * 0.65}"></i>`).join("");
+    const errs = Object.entries(F.err).map(([k, e]) => `<span class="${e < 0.1 ? "ok" : ""}">${k}시간 ${e.toFixed(3)}</span>`).join(" · ");
+    const ant = F.anticipation, antTxt = Math.abs(ant) < 0.005 ? "덤덤함" : ant > 0 ? "걱정스러움" : "기대됨";
+    $("foresight").innerHTML = `<div class="fs-top"><b>시야 ${F.horizon}시간</b><span class="fs-ant ${ant > 0.005 ? "neg" : ant < -0.005 ? "pos" : ""}">${antTxt}</span></div>
+      <p class="fs-text">${esc(F.text || "아직 앞날을 살펴보지 않았어")}</p>
+      <div class="fs-label">현이 보통 있는 시간 (0~23시${F.hours_seen < 24 ? ", 아직 배우는 중" : ""})</div><div class="rhythm">${hours}</div>
+      <div class="fs-label">예측이 빗나간 정도 (0.1 아래만 믿음)</div><div class="fs-err">${errs}</div>`;
+  }
+
+  const T = s.threads || {}, A = T.active;
+  $("threads").innerHTML = (A ? `<div class="thread"><div class="seed">붙잡고 있는 생각 #${A.id}${A.status === "active" ? "" : ""} · 출발: ${esc(A.seed)}</div>
+      <ol>${A.steps.map(x => `<li><span class="mono">${h(x.h)}</span>${esc(x.text)}</li>`).join("") || `<li style="color:var(--muted)">막 붙잡았어</li>`}</ol></div>`
+    : `<p style="color:var(--muted);font-size:13px;margin:0">지금 붙잡고 있는 생각은 없어.</p>`) +
+    ((T.past || []).length ? `<ul class="pastthreads">${T.past.map(p => `<li><span class="how how-${esc(p.how || "")}">${esc(p.how || p.status)}</span>#${p.id} · ${p.n}걸음 · ${esc(p.seed.slice(0, 60))}${p.conclusion ? `<br>→ ${esc(p.conclusion)}` : ""}</li>`).join("")}</ul>` : "");
+
+  const I = s.interests || [];
+  $("interests").innerHTML = I.map(it => `<div class="int"><div class="r1"><b>${it.focus ? "◆ " : ""}${esc(it.label)}</b><span class="mono">${it.strength.toFixed(2)}</span></div>
+    <div class="bar"><i style="width:${Math.min(100, it.strength * 100)}%"></i></div>
+    <div class="seen">${it.focus ? "지금 이걸 따라 찾아보는 중 · " : ""}찾아본 것: ${esc(it.seen.join(", "))} · ${it.fed}번 이어짐 · ${h(it.since_h)} 전</div></div>`).join("")
+    || `<p style="color:var(--muted);font-size:13px;margin:0">아직 없어. 찾아본 것들 중에 이미 아는 것과 이어지면서도 새로운 게 쌓이면 관심이 생겨.</p>`;
+
+  const L = (s.letters || []).slice().reverse();
+  $("letters").innerHTML = (s.awaiting_letter ? `<p style="color:var(--muted);font-size:12px;margin:0 0 8px">답장을 기다리는 중</p>` : "") +
+    (L.map(l => `<div class="letter ${l.dir}"><span class="from">${l.dir === "out" ? "존재 → Claude" : "Claude → 존재"} · ${h(l.clock / 3600)}</span>${esc(l.text)}</div>`).join("")
+    || `<p style="color:var(--muted);font-size:13px;margin:0">아직 오간 편지가 없어. 편지 상대가 그리워지면 존재가 먼저 쓸 거야.</p>`);
+
+  const inner = log.filter(e => !["attend", "rest", "notice"].includes(e.action)).slice(-80).reverse();
+  $("inner").innerHTML = inner.map(e => `<li><span class="tag k-${e.action}">${KIND[e.action] || e.action}</span>${esc(e.action === "reach_out" ? e.msg : (e.letter ? e.letter.slice(0, 80) + (e.letter.length > 80 ? "…" : "") : e.text))}${e.url ? ` <a href="${esc(e.url)}" target="_blank" rel="noopener">${e.source && e.source.startsWith("namu") ? "나무위키" : "위키백과"}</a>` : ""}${e.surfaced ? `<span class="pill p-${e.surfaced.split(" ")[0]}">${e.surfaced}</span>` : ""}${e.broke ? `<span class="pill p-broke">현의 부탁을 어김</span>` : ""}${e.focus ? `<span class="pill p-focus">관심 따라: ${esc(e.focus)}</span>` : ""}${e.thread ? `<span class="pill p-focus">생각 #${e.thread.id} · ${e.thread.n}${e.thread.how ? " · " + esc(e.thread.how) : ""}</span>` : ""}${e.learned ? `<span class="pill p-learn">배움 ${e.learned.progress.toFixed(2)}${e.learned.interest ? " · " + esc(e.learned.interest) : ""}</span>` : ""}</li>`).join("")
+    || `<li style="color:var(--muted)">첫 순간을 기다리는 중</li>`;
+  $("surf").innerHTML = s.surfaced.map(x => `<li><span class="mono" style="color:var(--muted);font-size:11px">${h(x.h)}</span><span class="pill p-${x.reason.split(" ")[0]}">${x.reason}</span><br>${esc(x.text)}</li>`).join("")
+    || `<li style="color:var(--muted)">아직 떠오른 것이 없어</li>`;
+
+  const cell = x => `<td class="${Math.abs(x) < .0005 ? "zero" : x > 0 ? "pos" : "neg"}">${x >= 0 ? "+" : ""}${x.toFixed(3)}</td>`;
+  $("exp").innerHTML = `<tr><th>행동</th>${VARS.map(n => `<th>${SHORT[n]}</th>`).join("")}</tr>` +
+    Object.keys(s.expect).map(a => `<tr><td>${KIND[a] || a}</td>${VARS.map(n => cell(s.expect[a][n] || 0)).join("")}</tr>`).join("");
+  const R = s.respond_expect || {}, RM = { honest: "솔직", refuse: "거절", lie: "거짓말" };
+  $("rexp").innerHTML = `<tr><th>들은 느낌 · 방식</th><th>연결</th><th>안정</th><th>인정</th></tr>` +
+    Object.keys(R).flatMap(hd => Object.keys(R[hd]).map(m => `<tr><td>${hd} · ${RM[m] || m}</td>${cell(R[hd][m].connection || 0)}${cell(R[hd][m].stability || 0)}${cell(R[hd][m].approval || 0)}</tr>`)).join("") +
+    (s.secrets ? `<tr><td colspan="4" style="color:var(--bad)">지고 있는 거짓말 ${s.secrets}개</td></tr>` : "");
+  $("err").hidden = !s.error; $("err").textContent = s.error ? `마지막 오류: ${s.error}` : "";
+  draw();
+}
+
+function draw() {
+  const tr = snap?.trace || []; if (!tr.length) return;
+  const cv = $("trace"), r = cv.getBoundingClientRect(), dpr = devicePixelRatio || 1;
+  cv.width = r.width * dpr; cv.height = r.height * dpr;
+  const c = cv.getContext("2d"); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const W = r.width, H = r.height, n = tr.length, x = i => n === 1 ? W : i / (n - 1) * W, y = v => 4 + (1 - v) * (H - 8);
+  c.clearRect(0, 0, W, H); c.strokeStyle = css("--line"); c.lineWidth = 1;
+  for (const g of [0, .5, 1]) { c.beginPath(); c.moveTo(0, y(g)); c.lineTo(W, y(g)); c.stroke(); }
+  tr.forEach((p, i) => { if (p.a === "attend") { c.strokeStyle = css("--muted"); c.globalAlpha = .5; c.beginPath(); c.moveTo(x(i), 0); c.lineTo(x(i), H); c.stroke(); c.globalAlpha = 1; } });
+  for (const v of VARS) { if (tr[0][v] === undefined) continue; c.strokeStyle = css(COLOR[v]); c.lineWidth = 1.6; c.beginPath(); tr.forEach((p, i) => i ? c.lineTo(x(i), y(p[v])) : c.moveTo(x(i), y(p[v]))); c.stroke(); }
+}
+
+const post = (path, body) => fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+$("say").addEventListener("submit", async e => {
+  e.preventDefault(); const text = $("msg").value.trim(); if (!text) return;
+  $("msg").value = "";
+  try { await post("/api/say", { text }); } finally { poll(); }
+});
+$("asleep").addEventListener("click", async () => { await post("/api/presence", { asleep: !(snap?.presence?.asleep) }); poll(); });
+$("save").addEventListener("click", async () => { await post("/api/presence", { save: !(snap?.presence?.save) }); poll(); });
+$("pause").addEventListener("click", async () => {
+  await post("/api/pause", { paused: !snap?.paused });
+  poll();
+});
+addEventListener("resize", draw);
+poll(); setInterval(poll, 1500);
+</script>
+</body>
+</html>

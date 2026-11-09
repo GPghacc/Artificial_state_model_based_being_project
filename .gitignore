@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.venv*/
+venv/
+
+# 존재의 상태와 기록 (개인 데이터)
+*.db
+being/being_archive/
+being/letters/*.jsonl
+being/letters_test/*.jsonl
+being/data/
+
+# 실행 산출물
+state_model/logs/
+state_model/snapshots/
+state_model/presence.txt
+*.patch

@@ -1,0 +1,39 @@
+# 상태모델 v0 설정. 코드에 숫자를 박지 않고 여기서만 바꾼다.
+
+grid:
+  width: 128
+  height: 80
+
+time:
+  tick_hz: 30            # 실시간 고정
+  decide_every: 15       # 판단 주기 (틱)
+  plasticity_every: 300  # 매질 학습 주기 (틱, v0에선 꺼짐)
+  snapshot_every_sec: 300
+
+field:
+  c2: 0.07               # 퍼지는 세기
+  w2: 0.0008             # 원래 자리로 돌아오려는 힘
+  damp: 0.02             # 감쇠 ζ
+  excite: 0.5            # 흥분성 ε (감쇠 상쇄)
+  sat: 3.0               # 포화 한계
+  noise_floor: 0.012     # 배경 자극
+
+attention:
+  floor: 0.25            # 주의 밖 통과량
+  sigma: 14              # 지점 반경 (칸)
+  peak: 1.5              # 지점 하나에 예산 전부일 때 중심 증폭
+  spots:
+    - {x: 30, y: 45, w: 1.0}
+
+senses:
+  event_gain: 0.5        # 감각 사건 하나의 세기
+  event_rate: 0.6        # 신호 1.0일 때 틱당 평균 사건 수
+  change_burst: 4.0      # 신호가 변할 때 추가 사건 배율
+  toggle_file: presence.txt   # "watching" 또는 "sleep"
+
+drives:
+  total_energy: [0.01, 0.1]   # 범위형 설정값 (v0는 기록만)
+
+seed: 7
+log_dir: logs
+snapshot_dir: snapshots

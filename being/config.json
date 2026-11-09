@@ -1,0 +1,27 @@
+{
+  "backend": "ollama",
+  "ollama_host": "http://localhost:11434",
+  "loop_model": "gemma4:e2b",
+  "voice_model": "gemma4:12b",
+  "embed_model": "embeddinggemma-2",
+  "db": "being.db",
+  "port": 8765,
+  "idle_seconds": 20,
+  "min_gap_seconds": 2,
+  "time_scale": 1.0,
+  "quiet_hours": [],
+  "max_reach_per_day": 6,
+  "notify": true,
+  "open_browser": true,
+  "explore": true,
+  "max_explore_per_day": 12,
+  "explore_min_minutes": 30,
+  "wiki_langs": [
+    "ko",
+    "en"
+  ],
+  "wiki_contact": "",
+  "wikipedia": true,
+  "namuwiki_db": "data/namuwiki.db",
+  "letters_dir": "letters"
+}
