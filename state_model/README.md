@@ -66,3 +66,14 @@ python tools/replay.py logs/<run_id>_events.jsonl --config other.yaml
 - 내부 감각은 장 에너지를 되먹이는 고리라 그 구역이 가장 활발하다. 의도된 구조지만 `InteriorSense`의 scale로 세기를 조절할 수 있다
 - 전전두는 감각 입력이 없어서 조용하다. 판단 모듈이 이 구역을 읽게 되는 건 v1 이후
 - 처음 설계에서 `io/`였던 폴더는 파이썬 표준 모듈 이름과 겹쳐 `store/`로 바꿨다
+
+## 기준선 비교 시험
+
+장이 단순한 감쇠 벡터보다 뭘 더 담는지 재는 시험. 매질을 바꿀 때마다 돌려서 나아졌는지 숫자로 본다.
+
+```
+python experiments/baseline_benchmark.py                 # 약 1분
+python experiments/baseline_benchmark.py --set field.excite=0.9 --tag excite09
+```
+
+결과는 `experiments/results/`에 표(md)와 숫자(json)로 남는다.
